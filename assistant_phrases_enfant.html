@@ -1,0 +1,820 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mon Assistant Magique des Phrases</title>
+    <link href="https://fonts.googleapis.com/css2?family=Comic+Neue:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        :root { --primary: #FF6B9D; --secondary: #4ECDC4; --accent: #FFE66D; --bg: #FFF8F0; --text: #2C3E50; --card-bg: #FFFFFF; --success: #2ECC71; --error: #E74C3C; }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: "Comic Neue", cursive; background: var(--bg); min-height: 100vh; color: var(--text); overflow-x: hidden; }
+        @keyframes float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-10px)} }
+        @keyframes bounce { 0%,100%{transform:scale(1)} 50%{transform:scale(1.1)} }
+        @keyframes shake { 0%,100%{transform:translateX(0)} 25%{transform:translateX(-5px)} 75%{transform:translateX(5px)} }
+        @keyframes slideIn { from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:translateY(0)} }
+        @keyframes confetti-fall { 0%{transform:translateY(-100px) rotate(0deg);opacity:1} 100%{transform:translateY(100vh) rotate(720deg);opacity:0} }
+        .sparkle { position:fixed; pointer-events:none; font-size:2rem; animation:sparkle-anim 1s ease-out forwards; z-index:1000; }
+        @keyframes sparkle-anim { 0%{opacity:0;transform:scale(0) rotate(0deg)} 50%{opacity:1;transform:scale(1) rotate(180deg)} 100%{opacity:0;transform:scale(0) rotate(360deg)} }
+        .confetti { position:absolute; width:10px; height:10px; animation:confetti-fall 3s ease-out forwards; }
+        .header { background: linear-gradient(135deg, var(--primary), var(--secondary)); color: white; padding: 1.5rem; text-align: center; box-shadow: 0 4px 15px rgba(0,0,0,0.1); position: relative; overflow: hidden; }
+        .header h1 { font-size: 2.2rem; animation: float 3s ease-in-out infinite; text-shadow: 2px 2px 4px rgba(0,0,0,0.2); }
+        .header p { font-size: 1.2rem; margin-top: 0.5rem; opacity: 0.95; }
+        .stars-top { position: absolute; top: 10px; right: 20px; font-size: 1.5rem; }
+        .score-board { display: flex; justify-content: center; gap: 2rem; padding: 1rem; background: white; margin: 1rem auto; max-width: 600px; border-radius: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.08); }
+        .score-item { text-align: center; padding: 0.5rem 1.5rem; border-radius: 15px; font-size: 1.2rem; font-weight: bold; }
+        .score-item.stars-count { background: #FFF3CD; color: #856404; }
+        .score-item.level { background: #D1ECF1; color: #0C5460; }
+        .container { max-width: 900px; margin: 0 auto; padding: 1rem; }
+        .modes { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem; margin-bottom: 2rem; }
+        .mode-card { background: var(--card-bg); border-radius: 25px; padding: 2rem; text-align: center; cursor: pointer; transition: all 0.3s ease; box-shadow: 0 8px 25px rgba(0,0,0,0.1); border: 4px solid transparent; user-select: none; }
+        .mode-card:hover { transform: translateY(-5px); box-shadow: 0 12px 30px rgba(0,0,0,0.15); border-color: var(--secondary); }
+        .mode-card.active { border-color: var(--secondary); background: #F0FDFC; }
+        .mode-icon { font-size: 4rem; margin-bottom: 1rem; animation: bounce 2s ease-in-out infinite; }
+        .mode-title { font-size: 1.5rem; color: var(--primary); margin-bottom: 0.5rem; }
+        .mode-desc { color: #666; font-size: 1rem; }
+        .game-area { background: var(--card-bg); border-radius: 25px; padding: 2rem; box-shadow: 0 8px 25px rgba(0,0,0,0.1); margin-bottom: 2rem; display: none; animation: slideIn 0.5s ease-out; }
+        .game-area.active { display: block; }
+        .game-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem; }
+        .game-title { font-size: 1.8rem; color: var(--primary); }
+        .progress-bar { width: 100%; height: 20px; background: #E8E8E8; border-radius: 10px; overflow: hidden; margin-bottom: 1.5rem; }
+        .progress-fill { height: 100%; background: linear-gradient(90deg, var(--secondary), var(--primary)); border-radius: 10px; transition: width 0.5s ease; width: 0%; }
+        .exercise-container { text-align: center; }
+        .instruction { font-size: 1.4rem; color: var(--text); margin-bottom: 1.5rem; padding: 1rem; background: #FFF3CD; border-radius: 15px; border-left: 5px solid var(--accent); }
+        .word-blocks { display: flex; flex-wrap: wrap; justify-content: center; gap: 0.8rem; margin: 1.5rem 0; min-height: 80px; padding: 1rem; background: #F8F9FA; border-radius: 15px; border: 3px dashed #DDD; }
+        .word-block { background: linear-gradient(135deg, var(--secondary), #45B7AA); color: white; padding: 0.8rem 1.2rem; border-radius: 12px; font-size: 1.3rem; font-weight: bold; cursor: pointer; transition: all 0.2s ease; user-select: none; box-shadow: 0 4px 10px rgba(78, 205, 196, 0.3); }
+        .word-block:hover { transform: scale(1.05); box-shadow: 0 6px 15px rgba(78, 205, 196, 0.4); }
+        .word-block.selected { background: linear-gradient(135deg, var(--primary), #E91E63); transform: scale(1.1); }
+        .word-block.correct { background: linear-gradient(135deg, var(--success), #27AE60); animation: bounce 0.5s ease; }
+        .word-block.wrong { background: linear-gradient(135deg, var(--error), #C0392B); animation: shake 0.5s ease; }
+        .answer-zone { display: flex; flex-wrap: wrap; justify-content: center; gap: 0.5rem; margin: 1.5rem 0; min-height: 70px; padding: 1rem; background: #E8F8F5; border-radius: 15px; border: 3px solid var(--secondary); }
+        .answer-slot { background: white; border: 3px dashed #BDC3C7; border-radius: 12px; padding: 0.8rem 1.2rem; min-width: 100px; min-height: 50px; display: flex; align-items: center; justify-content: center; font-size: 1.3rem; font-weight: bold; color: #95A5A6; transition: all 0.3s ease; }
+        .answer-slot.filled { border-style: solid; border-color: var(--secondary); color: var(--text); background: #F0FDFC; }
+        .choices { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin: 1.5rem 0; }
+        .choice-btn { background: white; border: 3px solid var(--secondary); border-radius: 15px; padding: 1rem; font-size: 1.2rem; font-family: "Comic Neue", cursive; cursor: pointer; transition: all 0.3s ease; font-weight: bold; }
+        .choice-btn:hover { background: var(--secondary); color: white; transform: scale(1.02); }
+        .choice-btn.correct { background: var(--success); border-color: var(--success); color: white; animation: bounce 0.5s ease; }
+        .choice-btn.wrong { background: var(--error); border-color: var(--error); color: white; animation: shake 0.5s ease; }
+        .sentence-fill { font-size: 1.6rem; line-height: 2.5; margin: 1.5rem 0; padding: 1.5rem; background: #F8F9FA; border-radius: 15px; }
+        .blank-input { display: inline-block; width: 150px; padding: 0.3rem 0.8rem; font-size: 1.4rem; font-family: "Comic Neue", cursive; border: 3px solid var(--secondary); border-radius: 10px; text-align: center; outline: none; transition: all 0.3s ease; }
+        .blank-input:focus { border-color: var(--primary); box-shadow: 0 0 10px rgba(255, 107, 157, 0.3); }
+        .blank-input.correct { border-color: var(--success); background: #E8F8F5; }
+        .blank-input.wrong { border-color: var(--error); background: #FDEDEC; }
+        .btn-group { display: flex; justify-content: center; gap: 1rem; margin-top: 1.5rem; flex-wrap: wrap; }
+        .btn { padding: 0.8rem 2rem; font-size: 1.2rem; font-family: "Comic Neue", cursive; font-weight: bold; border: none; border-radius: 50px; cursor: pointer; transition: all 0.3s ease; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+        .btn-primary { background: linear-gradient(135deg, var(--primary), #E91E63); color: white; }
+        .btn-secondary { background: linear-gradient(135deg, var(--secondary), #45B7AA); color: white; }
+        .btn-accent { background: linear-gradient(135deg, var(--accent), #F4D03F); color: var(--text); }
+        .btn:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0,0,0,0.15); }
+        .btn:active { transform: translateY(0); }
+        .feedback { margin: 1.5rem 0; padding: 1rem; border-radius: 15px; font-size: 1.3rem; font-weight: bold; display: none; animation: slideIn 0.3s ease; }
+        .feedback.show { display: block; }
+        .feedback.success { background: #D4EDDA; color: #155724; border: 2px solid var(--success); }
+        .feedback.error { background: #F8D7DA; color: #721C24; border: 2px solid var(--error); }
+        .feedback.hint { background: #D1ECF1; color: #0C5460; border: 2px solid var(--secondary); }
+        .mascot { font-size: 5rem; text-align: center; margin: 1rem 0; animation: float 3s ease-in-out infinite; }
+        .speech-bubble { position: relative; background: white; border-radius: 20px; padding: 1.5rem; margin: 1rem auto; max-width: 600px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); border: 3px solid var(--secondary); }
+        .speech-bubble::after { content: ""; position: absolute; bottom: -15px; left: 50%; transform: translateX(-50%); border-width: 15px 15px 0; border-style: solid; border-color: var(--secondary) transparent transparent transparent; }
+        .celebration { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 999; display: none; }
+        .celebration.active { display: block; }
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: none; justify-content: center; align-items: center; z-index: 1000; }
+        .modal-overlay.active { display: flex; }
+        .modal { background: white; border-radius: 30px; padding: 3rem; text-align: center; max-width: 500px; width: 90%; animation: bounce 0.5s ease; box-shadow: 0 20px 60px rgba(0,0,0,0.2); }
+        .modal h2 { font-size: 2.5rem; color: var(--primary); margin-bottom: 1rem; }
+        .modal .big-emoji { font-size: 5rem; margin: 1rem 0; }
+        .hint-btn { background: #FFF3CD; border: 2px solid var(--accent); color: #856404; padding: 0.5rem 1rem; border-radius: 20px; cursor: pointer; font-family: "Comic Neue", cursive; font-weight: bold; font-size: 1rem; transition: all 0.3s ease; }
+        .hint-btn:hover { background: var(--accent); transform: scale(1.05); }
+        .voice-btn { background: linear-gradient(135deg, #9B59B6, #8E44AD); color: white; border: none; width: 50px; height: 50px; border-radius: 50%; font-size: 1.5rem; cursor: pointer; transition: all 0.3s ease; display: flex; align-items: center; justify-content: center; }
+        .voice-btn:hover { transform: scale(1.1); box-shadow: 0 4px 15px rgba(155, 89, 182, 0.4); }
+        @keyframes pulse { 0%,100%{box-shadow:0 0 0 0 rgba(155,89,182,0.4)} 50%{box-shadow:0 0 0 15px rgba(155,89,182,0)} }
+        .voice-btn.speaking { animation: pulse 1s ease infinite; }
+        @media (max-width: 600px) { .header h1 { font-size: 1.5rem; } .mode-title { font-size: 1.2rem; } .sentence-fill { font-size: 1.2rem; } .word-block { font-size: 1rem; padding: 0.6rem 0.8rem; } .blank-input { width: 120px; font-size: 1.1rem; } }
+    </style>
+</head>
+<body>
+    <div class="celebration" id="celebration"></div>
+    <div class="modal-overlay" id="levelModal">
+        <div class="modal">
+            <div class="big-emoji">&#127881;&#127942;&#127881;</div>
+            <h2>Bravo ! Niveau termine !</h2>
+            <p style="font-size: 1.3rem; margin: 1rem 0;">Tu as gagne <span id="modalStars">&#11088;</span> etoiles !</p>
+            <p style="font-size: 1.1rem; color: #666;">Tu es super fort(e) ! Continue comme ca !</p>
+            <button class="btn btn-primary" id="nextLevelBtn" style="margin-top: 1.5rem;">Niveau suivant &#10132;</button>
+        </div>
+    </div>
+    <header class="header">
+        <div class="stars-top">&#11088;&#11088;&#11088;</div>
+        <h1>&#127775; Mon Assistant Magique des Phrases &#127775;</h1>
+        <p>Apprends a construire des phrases en t'amusant !</p>
+    </header>
+    <div class="score-board">
+        <div class="score-item stars-count">&#11088; <span id="starCount">0</span> etoiles</div>
+        <div class="score-item level">&#127919; Niveau <span id="levelNum">1</span></div>
+    </div>
+    <div class="container">
+        <div id="modeSelection">
+            <div class="speech-bubble">
+                <p style="font-size: 1.3rem;">&#128075; Salut ! Je suis ton assistant magique ! Choisis un jeu pour commencer :</p>
+            </div>
+            <div class="mascot">&#129302;</div>
+            <div class="modes">
+                <div class="mode-card" data-mode="order">
+                    <div class="mode-icon">&#129513;</div>
+                    <div class="mode-title">Remets dans l'ordre</div>
+                    <div class="mode-desc">Clique sur les mots pour les mettre dans le bon ordre et former une phrase correcte.</div>
+                </div>
+                <div class="mode-card" data-mode="complete">
+                    <div class="mode-icon">&#9999;&#65039;</div>
+                    <div class="mode-title">Complete la phrase</div>
+                    <div class="mode-desc">Trouve le mot manquant pour completer la phrase. Ecris ta reponse !</div>
+                </div>
+                <div class="mode-card" data-mode="identify">
+                    <div class="mode-icon">&#128269;</div>
+                    <div class="mode-title">Trouve l'erreur</div>
+                    <div class="mode-desc">Trouve ce qui ne va pas dans la phrase et choisis la bonne reponse.</div>
+                </div>
+                <div class="mode-card" data-mode="build">
+                    <div class="mode-icon">&#127959;&#65039;</div>
+                    <div class="mode-title">Construis ta phrase</div>
+                    <div class="mode-desc">Utilise les mots donnes pour construire ta propre phrase correcte.</div>
+                </div>
+            </div>
+        </div>
+        <div id="gameArea" class="game-area">
+            <div class="game-header">
+                <h2 class="game-title" id="gameTitle">&#129513; Remets dans l'ordre</h2>
+                <button class="voice-btn" id="voiceBtn" title="Ecouter">&#128266;</button>
+            </div>
+            <div class="progress-bar"><div class="progress-fill" id="progressBar"></div></div>
+            <div class="exercise-container" id="exerciseContainer"></div>
+            <div class="feedback" id="feedback"></div>
+            <div class="btn-group">
+                <button class="hint-btn" id="hintBtn">&#128161; Besoin d'aide ?</button>
+                <button class="btn btn-secondary" id="checkBtn">&#9989; Verifier</button>
+                <button class="btn btn-primary" id="nextBtn" style="display:none;">&#10132; Suivant</button>
+            </div>
+        </div>
+        <div style="text-align: center; margin-top: 2rem;">
+            <button class="btn btn-accent" id="homeBtn" style="display:none;">&#127968; Retour au menu</button>
+        </div>
+    </div>
+    <script>
+        var exercises = {
+            order: [
+                {
+                    instruction: "Remets ces mots dans l'ordre pour former une phrase correcte :",
+                    words: ["chat", "Le", "dort", "sur", "le", "lit"],
+                    correct: ["Le", "chat", "dort", "sur", "le", "lit"],
+                    hint: "Pense a : Qui ? Qu'est-ce qu'il fait ? Ou ?",
+                    sentence: "Le chat dort sur le lit."
+                },
+                {
+                    instruction: "Remets ces mots dans l'ordre :",
+                    words: ["mange", "La", "pomme", "une", "fille"],
+                    correct: ["La", "fille", "mange", "une", "pomme"],
+                    hint: "Qui fait l'action ? Quelle action ? Quoi ?",
+                    sentence: "La fille mange une pomme."
+                },
+                {
+                    instruction: "Range ces mots pour faire une belle phrase :",
+                    words: ["chien", "court", "Le", "dans", "jardin", "le"],
+                    correct: ["Le", "chien", "court", "dans", "le", "jardin"],
+                    hint: "Le sujet (qui) vient toujours au debut !",
+                    sentence: "Le chien court dans le jardin."
+                },
+                {
+                    instruction: "Mets les mots dans le bon ordre :",
+                    words: ["regarde", "Je", "la", "television"],
+                    correct: ["Je", "regarde", "la", "television"],
+                    hint: "Commence par 'Je' !",
+                    sentence: "Je regarde la television."
+                },
+                {
+                    instruction: "Range ces mots :",
+                    words: ["soleil", "brille", "Le", "fort", "tres"],
+                    correct: ["Le", "soleil", "brille", "tres", "fort"],
+                    hint: "Qu'est-ce qui brille ? Comment ?",
+                    sentence: "Le soleil brille tres fort."
+                }
+            ],
+            complete: [
+                {
+                    instruction: "Trouve le mot manquant :",
+                    sentence: "Le ____ miaule sur le toit.",
+                    answer: "chat",
+                    hint: "C'est un animal qui fait 'miaou' !",
+                    alternatives: ["chien", "oiseau", "chat"]
+                },
+                {
+                    instruction: "Complete avec le bon mot :",
+                    sentence: "Nous ____ au parc tous les jours.",
+                    answer: "allons",
+                    hint: "C'est le verbe 'aller' avec 'nous'.",
+                    alternatives: ["va", "allons", "allez"]
+                },
+                {
+                    instruction: "Quel mot manque ?",
+                    sentence: "Elle ____ un beau dessin.",
+                    answer: "fait",
+                    hint: "C'est le verbe 'faire' avec 'elle'.",
+                    alternatives: ["fais", "fait", "font"]
+                },
+                {
+                    instruction: "Trouve le bon verbe :",
+                    sentence: "Les enfants ____ a l'ecole.",
+                    answer: "vont",
+                    hint: "C'est le verbe 'aller' avec 'ils/elles'.",
+                    alternatives: ["va", "vas", "vont"]
+                },
+                {
+                    instruction: "Complete la phrase :",
+                    sentence: "Tu ____ tres bien ce jeu !",
+                    answer: "joues",
+                    hint: "C'est le verbe 'jouer' avec 'tu'.",
+                    alternatives: ["joue", "joues", "jouons"]
+                }
+            ],
+            identify: [
+                {
+                    instruction: "Qu'est-ce qui ne va pas dans cette phrase ?",
+                    sentence: "Le chien mange la pomme verte.",
+                    error: "rien",
+                    hint: "Regarde bien... la phrase est correcte !",
+                    options: ["Le mot 'chien'", "Le mot 'mange'", "Rien, c'est correct !", "Le mot 'verte'"]
+                },
+                {
+                    instruction: "Trouve l'erreur :",
+                    sentence: "Je mange une pomme rouges.",
+                    error: "rouges",
+                    hint: "'Pomme' est au singulier, l'adjectif doit etre... ?",
+                    options: ["Le mot 'mange'", "Le mot 'rouges'", "Le mot 'une'", "Rien, c'est correct"]
+                },
+                {
+                    instruction: "Quel est le probleme ?",
+                    sentence: "Les chats dort sur le lit.",
+                    error: "dort",
+                    hint: "'Les chats' c'est pluriel, le verbe doit etre... ?",
+                    options: ["Le mot 'Les'", "Le mot 'dort'", "Le mot 'sur'", "Rien, c'est correct"]
+                },
+                {
+                    instruction: "Trouve l'erreur :",
+                    sentence: "Elle va a l'ecole en voiture bleu.",
+                    error: "bleu",
+                    hint: "'Voiture' est feminin, l'adjectif doit s'accorder !",
+                    options: ["Le mot 'ecole'", "Le mot 'bleu'", "Le mot 'voiture'", "Rien, c'est correct"]
+                },
+                {
+                    instruction: "Qu'est-ce qui cloche ?",
+                    sentence: "Nous aimons les glaces et les chocolats.",
+                    error: "rien",
+                    hint: "Regarde bien, tout est correct !",
+                    options: ["Le mot 'aimons'", "Le mot 'glaces'", "Rien, c'est correct !", "Le mot 'chocolats'"]
+                }
+            ],
+            build: [
+                {
+                    instruction: "Construis une phrase avec ces mots (clique pour les ajouter) :",
+                    words: ["Le", "chat", "dort", "sur", "le", "lit", "petit", "bleu"],
+                    minWords: 5,
+                    hint: "Commence par 'Le' et ajoute des details !",
+                    example: "Le petit chat dort sur le lit bleu."
+                },
+                {
+                    instruction: "Fais une phrase avec ces mots :",
+                    words: ["Je", "mange", "une", "pomme", "rouge", "delicieuse", "ce", "matin"],
+                    minWords: 5,
+                    hint: "Qui ? Quoi ? Comment ? Quand ?",
+                    example: "Je mange une pomme rouge ce matin."
+                },
+                {
+                    instruction: "Cree ta propre phrase :",
+                    words: ["Le", "chien", "court", "vite", "dans", "le", "grand", "jardin", "vert"],
+                    minWords: 5,
+                    hint: "N'oublie pas le sujet et le verbe !",
+                    example: "Le chien court vite dans le jardin vert."
+                },
+                {
+                    instruction: "Construis une belle phrase :",
+                    words: ["Nous", "allons", "au", "parc", "jouer", "avec", "notre", "ballon", "nouveau"],
+                    minWords: 5,
+                    hint: "Tu peux dire ou et avec quoi !",
+                    example: "Nous allons au parc jouer avec notre ballon."
+                },
+                {
+                    instruction: "Fais une phrase complete :",
+                    words: ["Elle", "lit", "un", "livre", "interessant", "dans", "sa", "chambre", "tranquille"],
+                    minWords: 5,
+                    hint: "Qui ? Quelle action ? Quoi ? Ou ?",
+                    example: "Elle lit un livre interessant dans sa chambre."
+                }
+            ]
+        };
+
+        var currentMode = '';
+        var currentExerciseIndex = 0;
+        var stars = 0;
+        var level = 1;
+        var selectedWords = [];
+        var attempts = 0;
+        var currentExercise = null;
+        var selectedChoice = null;
+
+        var modeSelection = document.getElementById('modeSelection');
+        var gameArea = document.getElementById('gameArea');
+        var exerciseContainer = document.getElementById('exerciseContainer');
+        var feedbackEl = document.getElementById('feedback');
+        var progressBar = document.getElementById('progressBar');
+        var gameTitle = document.getElementById('gameTitle');
+        var starCount = document.getElementById('starCount');
+        var levelNum = document.getElementById('levelNum');
+        var checkBtn = document.getElementById('checkBtn');
+        var nextBtn = document.getElementById('nextBtn');
+        var hintBtn = document.getElementById('hintBtn');
+        var homeBtn = document.getElementById('homeBtn');
+        var voiceBtn = document.getElementById('voiceBtn');
+        var nextLevelBtn = document.getElementById('nextLevelBtn');
+        var levelModal = document.getElementById('levelModal');
+        var celebration = document.getElementById('celebration');
+
+        function init() {
+            document.querySelectorAll('.mode-card').forEach(function(card) {
+                card.addEventListener('click', function() {
+                    var mode = this.getAttribute('data-mode');
+                    selectMode(mode, this);
+                });
+            });
+
+            checkBtn.addEventListener('click', checkAnswer);
+            nextBtn.addEventListener('click', nextExercise);
+            hintBtn.addEventListener('click', showHint);
+            homeBtn.addEventListener('click', goHome);
+            voiceBtn.addEventListener('click', speakCurrent);
+            nextLevelBtn.addEventListener('click', nextLevel);
+
+            document.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter' && currentMode === 'complete') {
+                    checkAnswer();
+                }
+            });
+        }
+
+        function selectMode(mode, cardElement) {
+            currentMode = mode;
+            currentExerciseIndex = 0;
+            selectedWords = [];
+            attempts = 0;
+            selectedChoice = null;
+
+            document.querySelectorAll('.mode-card').forEach(function(c) {
+                c.classList.remove('active');
+            });
+            if (cardElement) cardElement.classList.add('active');
+
+            setTimeout(function() {
+                modeSelection.style.display = 'none';
+                gameArea.classList.add('active');
+                homeBtn.style.display = 'inline-block';
+                loadExercise();
+            }, 300);
+        }
+
+        function goHome() {
+            modeSelection.style.display = 'block';
+            gameArea.classList.remove('active');
+            homeBtn.style.display = 'none';
+            document.querySelectorAll('.mode-card').forEach(function(c) {
+                c.classList.remove('active');
+            });
+        }
+
+        function loadExercise() {
+            var modeExercises = exercises[currentMode];
+            if (currentExerciseIndex >= modeExercises.length) {
+                showLevelComplete();
+                return;
+            }
+
+            currentExercise = modeExercises[currentExerciseIndex];
+            selectedWords = [];
+            attempts = 0;
+            selectedChoice = null;
+
+            var progress = ((currentExerciseIndex) / modeExercises.length) * 100;
+            progressBar.style.width = progress + '%';
+
+            var titles = {
+                order: String.fromCodePoint(0x1F9E9) + " Remets dans l'ordre",
+                complete: String.fromCodePoint(0x270F, 0xFE0F) + " Complete la phrase",
+                identify: String.fromCodePoint(0x1F50D) + " Trouve l'erreur",
+                build: String.fromCodePoint(0x1F3D7, 0xFE0F) + " Construis ta phrase"
+            };
+            gameTitle.textContent = titles[currentMode];
+
+            feedbackEl.className = 'feedback';
+            nextBtn.style.display = 'none';
+            checkBtn.style.display = 'inline-block';
+
+            renderExercise();
+
+            setTimeout(function() {
+                speakText(currentExercise.instruction);
+            }, 500);
+        }
+
+        function renderExercise() {
+            exerciseContainer.innerHTML = '';
+
+            var instructionDiv = document.createElement('div');
+            instructionDiv.className = 'instruction';
+            instructionDiv.textContent = currentExercise.instruction;
+            exerciseContainer.appendChild(instructionDiv);
+
+            if (currentMode === 'order') {
+                renderOrderExercise();
+            } else if (currentMode === 'complete') {
+                renderCompleteExercise();
+            } else if (currentMode === 'identify') {
+                renderIdentifyExercise();
+            } else if (currentMode === 'build') {
+                renderBuildExercise();
+            }
+        }
+
+        function renderOrderExercise() {
+            var shuffled = currentExercise.words.slice().sort(function() {
+                return Math.random() - 0.5;
+            });
+
+            var wordsDiv = document.createElement('div');
+            wordsDiv.className = 'word-blocks';
+            wordsDiv.id = 'wordBlocks';
+
+            shuffled.forEach(function(word) {
+                var block = document.createElement('div');
+                block.className = 'word-block';
+                block.textContent = word;
+                block.dataset.word = word;
+                block.addEventListener('click', function() {
+                    toggleWord(this, word);
+                });
+                wordsDiv.appendChild(block);
+            });
+
+            exerciseContainer.appendChild(wordsDiv);
+
+            var answerDiv = document.createElement('div');
+            answerDiv.className = 'answer-zone';
+            answerDiv.id = 'answerZone';
+            answerDiv.innerHTML = '<p style="color: #95A5A6; width: 100%;">Clique sur les mots pour les mettre ici ' + String.fromCodePoint(0x1F446) + '</p>';
+            exerciseContainer.appendChild(answerDiv);
+        }
+
+        function toggleWord(block, word) {
+            if (block.classList.contains('selected')) {
+                block.classList.remove('selected');
+                var idx = selectedWords.indexOf(word);
+                if (idx > -1) selectedWords.splice(idx, 1);
+            } else {
+                block.classList.add('selected');
+                selectedWords.push(word);
+            }
+            updateAnswerZone();
+        }
+
+        function updateAnswerZone() {
+            var zone = document.getElementById('answerZone');
+            if (selectedWords.length === 0) {
+                zone.innerHTML = '<p style="color: #95A5A6; width: 100%;">Clique sur les mots pour les mettre ici ' + String.fromCodePoint(0x1F446) + '</p>';
+            } else {
+                zone.innerHTML = '';
+                selectedWords.forEach(function(word) {
+                    var slot = document.createElement('div');
+                    slot.className = 'answer-slot filled';
+                    slot.textContent = word;
+                    zone.appendChild(slot);
+                });
+            }
+        }
+
+        function renderCompleteExercise() {
+            var sentenceDiv = document.createElement('div');
+            sentenceDiv.className = 'sentence-fill';
+            sentenceDiv.innerHTML = currentExercise.sentence.replace('____', '<input type="text" class="blank-input" id="blankInput" placeholder="???">');
+            exerciseContainer.appendChild(sentenceDiv);
+
+            var choicesDiv = document.createElement('div');
+            choicesDiv.className = 'choices';
+
+            var shuffled = currentExercise.alternatives.slice().sort(function() {
+                return Math.random() - 0.5;
+            });
+
+            shuffled.forEach(function(choice) {
+                var btn = document.createElement('button');
+                btn.className = 'choice-btn';
+                btn.textContent = choice;
+                btn.addEventListener('click', function() {
+                    selectChoice(this, choice);
+                });
+                choicesDiv.appendChild(btn);
+            });
+
+            exerciseContainer.appendChild(choicesDiv);
+        }
+
+        function selectChoice(btn, choice) {
+            document.querySelectorAll('.choice-btn').forEach(function(b) {
+                b.classList.remove('correct', 'wrong');
+            });
+            var input = document.getElementById('blankInput');
+            if (input) input.value = choice;
+            selectedChoice = choice;
+        }
+
+        function renderIdentifyExercise() {
+            var sentenceDiv = document.createElement('div');
+            sentenceDiv.className = 'sentence-fill';
+            sentenceDiv.style.fontSize = '1.8rem';
+            sentenceDiv.style.background = '#FFF3CD';
+            sentenceDiv.innerHTML = '"' + currentExercise.sentence + '"';
+            exerciseContainer.appendChild(sentenceDiv);
+
+            var choicesDiv = document.createElement('div');
+            choicesDiv.className = 'choices';
+
+            currentExercise.options.forEach(function(option) {
+                var btn = document.createElement('button');
+                btn.className = 'choice-btn';
+                btn.textContent = option;
+                btn.addEventListener('click', function() {
+                    selectIdentifyChoice(this, option);
+                });
+                choicesDiv.appendChild(btn);
+            });
+
+            exerciseContainer.appendChild(choicesDiv);
+        }
+
+        function selectIdentifyChoice(btn, option) {
+            document.querySelectorAll('.choice-btn').forEach(function(b) {
+                b.classList.remove('correct', 'wrong');
+            });
+            selectedChoice = option;
+            btn.classList.add('selected');
+        }
+
+        function renderBuildExercise() {
+            var wordsDiv = document.createElement('div');
+            wordsDiv.className = 'word-blocks';
+            wordsDiv.id = 'buildWords';
+
+            currentExercise.words.forEach(function(word) {
+                var block = document.createElement('div');
+                block.className = 'word-block';
+                block.textContent = word;
+                block.dataset.word = word;
+                block.addEventListener('click', function() {
+                    addBuildWord(this, word);
+                });
+                wordsDiv.appendChild(block);
+            });
+
+            exerciseContainer.appendChild(wordsDiv);
+
+            var answerDiv = document.createElement('div');
+            answerDiv.className = 'answer-zone';
+            answerDiv.id = 'buildZone';
+            answerDiv.innerHTML = '<p style="color: #95A5A6; width: 100%;">Clique sur les mots pour construire ta phrase ' + String.fromCodePoint(0x1F446) + '</p>';
+            exerciseContainer.appendChild(answerDiv);
+
+            var infoDiv = document.createElement('p');
+            infoDiv.style.cssText = 'color: #666; margin-top: 1rem; font-size: 1rem;';
+            infoDiv.textContent = String.fromCodePoint(0x1F4A1) + " Essaie d'utiliser au moins " + currentExercise.minWords + ' mots !';
+            exerciseContainer.appendChild(infoDiv);
+        }
+
+        function addBuildWord(block, word) {
+            if (block.classList.contains('selected')) return;
+
+            block.classList.add('selected');
+            selectedWords.push(word);
+
+            var zone = document.getElementById('buildZone');
+            if (selectedWords.length === 1) {
+                zone.innerHTML = '';
+            }
+
+            var slot = document.createElement('div');
+            slot.className = 'answer-slot filled';
+            slot.textContent = word;
+            slot.style.cursor = 'pointer';
+            slot.addEventListener('click', function() {
+                removeBuildWord(this, word, block);
+            });
+            zone.appendChild(slot);
+        }
+
+        function removeBuildWord(slot, word, originalBlock) {
+            slot.remove();
+            var idx = selectedWords.indexOf(word);
+            if (idx > -1) selectedWords.splice(idx, 1);
+            originalBlock.classList.remove('selected');
+
+            if (selectedWords.length === 0) {
+                document.getElementById('buildZone').innerHTML = '<p style="color: #95A5A6; width: 100%;">Clique sur les mots pour construire ta phrase ' + String.fromCodePoint(0x1F446) + '</p>';
+            }
+        }
+
+        function checkAnswer() {
+            attempts++;
+            var isCorrect = false;
+            var feedbackText = '';
+            var feedbackClass = '';
+
+            if (currentMode === 'order') {
+                isCorrect = JSON.stringify(selectedWords) === JSON.stringify(currentExercise.correct);
+                if (isCorrect) {
+                    feedbackText = String.fromCodePoint(0x1F389) + " Bravo ! La phrase est parfaitement ordonnee !";
+                    feedbackClass = 'success';
+                    highlightWords('correct');
+                } else {
+                    feedbackText = String.fromCodePoint(0x274C) + " Pas tout a fait. Essaie encore !";
+                    feedbackClass = 'error';
+                    highlightWords('wrong');
+                }
+            } else if (currentMode === 'complete') {
+                var input = document.getElementById('blankInput');
+                var val = input ? input.value.trim().toLowerCase() : '';
+                isCorrect = val === currentExercise.answer.toLowerCase();
+
+                if (isCorrect) {
+                    feedbackText = String.fromCodePoint(0x1F389) + " Excellent ! C'est le bon mot !";
+                    feedbackClass = 'success';
+                    input.classList.add('correct');
+                } else {
+                    feedbackText = String.fromCodePoint(0x274C) + " Ce n'est pas le bon mot. Reessaie !";
+                    feedbackClass = 'error';
+                    input.classList.add('wrong');
+                }
+            } else if (currentMode === 'identify') {
+                if (!selectedChoice) {
+                    feedbackText = String.fromCodePoint(0x1F446) + " Choisis une reponse d'abord !";
+                    feedbackClass = 'hint';
+                } else {
+                    var isCorrectChoice = (currentExercise.error === 'rien' && selectedChoice.indexOf('correct') > -1) ||
+                                          (currentExercise.error !== 'rien' && selectedChoice.indexOf(currentExercise.error) > -1);
+
+                    if (isCorrectChoice) {
+                        isCorrect = true;
+                        feedbackText = String.fromCodePoint(0x1F389) + " Bravo ! Tu as trouve !";
+                        feedbackClass = 'success';
+                        document.querySelectorAll('.choice-btn').forEach(function(b) {
+                            if (b.textContent === selectedChoice) b.classList.add('correct');
+                        });
+                    } else {
+                        feedbackText = String.fromCodePoint(0x274C) + " Ce n'est pas ca. Regarde bien la phrase !";
+                        feedbackClass = 'error';
+                        document.querySelectorAll('.choice-btn').forEach(function(b) {
+                            if (b.textContent === selectedChoice) b.classList.add('wrong');
+                        });
+                    }
+                }
+            } else if (currentMode === 'build') {
+                var sentence = selectedWords.join(' ');
+                var subjects = ['Le', 'La', 'Je', 'Tu', 'Il', 'Elle', 'Nous', 'Les'];
+                var verbs = ['mange', 'dort', 'court', 'regarde', 'va', 'vont', 'allons', 'joue', 'joues', 'lit', 'aimons', 'brille'];
+                var hasSubject = selectedWords.some(function(w) { return subjects.indexOf(w) > -1; });
+                var hasVerb = selectedWords.some(function(w) { return verbs.indexOf(w) > -1; });
+
+                isCorrect = selectedWords.length >= currentExercise.minWords && hasSubject && hasVerb;
+
+                if (isCorrect) {
+                    feedbackText = String.fromCodePoint(0x1F389) + ' Super phrase ! "' + sentence + '" est tres bien !';
+                    feedbackClass = 'success';
+                } else {
+                    if (selectedWords.length < currentExercise.minWords) {
+                        feedbackText = String.fromCodePoint(0x274C) + ' Il faut au moins ' + currentExercise.minWords + ' mots. Continue !';
+                    } else if (!hasSubject) {
+                        feedbackText = String.fromCodePoint(0x274C) + " Il manque un sujet (qui fait l'action ?). Ajoute Le, La, Je, etc.";
+                    } else if (!hasVerb) {
+                        feedbackText = String.fromCodePoint(0x274C) + " Il manque un verbe (qu'est-ce qu'il fait ?). Ajoute mange, dort, etc.";
+                    }
+                    feedbackClass = 'error';
+                }
+            }
+
+            feedbackEl.textContent = feedbackText;
+            feedbackEl.className = 'feedback show ' + feedbackClass;
+
+            if (isCorrect) {
+                stars++;
+                starCount.textContent = stars;
+                createSparkles();
+                speakText("Bravo ! C'est correct !");
+                nextBtn.style.display = 'inline-block';
+                checkBtn.style.display = 'none';
+            } else {
+                speakText("Essaie encore, tu peux y arriver !");
+                if (attempts >= 2) {
+                    hintBtn.style.display = 'inline-block';
+                }
+            }
+        }
+
+        function highlightWords(type) {
+            document.querySelectorAll('.word-block.selected').forEach(function(block) {
+                block.classList.remove('selected');
+                block.classList.add(type);
+            });
+        }
+
+        function showHint() {
+            feedbackEl.textContent = String.fromCodePoint(0x1F4A1) + ' ' + currentExercise.hint;
+            feedbackEl.className = 'feedback show hint';
+            speakText(currentExercise.hint);
+        }
+
+        function nextExercise() {
+            currentExerciseIndex++;
+            checkBtn.style.display = 'inline-block';
+            loadExercise();
+        }
+
+        function showLevelComplete() {
+            var starStr = '';
+            for (var i = 0; i < Math.min(stars, 5); i++) starStr += String.fromCodePoint(0x2B50);
+            document.getElementById('modalStars').textContent = starStr;
+            levelModal.classList.add('active');
+            createConfetti();
+            speakText("Felicitations ! Tu as termine le niveau !");
+        }
+
+        function nextLevel() {
+            level++;
+            levelNum.textContent = level;
+            levelModal.classList.remove('active');
+            celebration.classList.remove('active');
+            celebration.innerHTML = '';
+            currentExerciseIndex = 0;
+            loadExercise();
+        }
+
+        function speakText(text) {
+            if ('speechSynthesis' in window) {
+                window.speechSynthesis.cancel();
+                var utterance = new SpeechSynthesisUtterance(text);
+                utterance.lang = 'fr-FR';
+                utterance.rate = 0.85;
+                utterance.pitch = 1.1;
+                window.speechSynthesis.speak(utterance);
+            }
+        }
+
+        function speakCurrent() {
+            var text = currentExercise.instruction + '. ';
+            if (currentMode === 'order' || currentMode === 'build') {
+                text += 'Les mots sont : ' + currentExercise.words.join(', ');
+            } else if (currentMode === 'complete') {
+                text += currentExercise.sentence.replace('____', 'trou');
+            } else if (currentMode === 'identify') {
+                text += 'La phrase est : ' + currentExercise.sentence;
+            }
+            speakText(text);
+        }
+
+        function createSparkles() {
+            var emojis = [String.fromCodePoint(0x2B50), String.fromCodePoint(0x2728), String.fromCodePoint(0x1F31F), String.fromCodePoint(0x1F4AB)];
+            for (var i = 0; i < 8; i++) {
+                (function(idx) {
+                    setTimeout(function() {
+                        var sparkle = document.createElement('div');
+                        sparkle.className = 'sparkle';
+                        sparkle.textContent = emojis[Math.floor(Math.random() * emojis.length)];
+                        sparkle.style.left = Math.random() * window.innerWidth + 'px';
+                        sparkle.style.top = Math.random() * window.innerHeight + 'px';
+                        document.body.appendChild(sparkle);
+                        setTimeout(function() { sparkle.remove(); }, 1000);
+                    }, idx * 100);
+                })(i);
+            }
+        }
+
+        function createConfetti() {
+            celebration.classList.add('active');
+            var colors = ['#FF6B9D', '#4ECDC4', '#FFE66D', '#2ECC71', '#9B59B6', '#E74C3C'];
+
+            for (var i = 0; i < 50; i++) {
+                var confetti = document.createElement('div');
+                confetti.className = 'confetti';
+                confetti.style.left = Math.random() * 100 + '%';
+                confetti.style.background = colors[Math.floor(Math.random() * colors.length)];
+                confetti.style.animationDelay = Math.random() * 2 + 's';
+                confetti.style.borderRadius = Math.random() > 0.5 ? '50%' : '0';
+                celebration.appendChild(confetti);
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>
