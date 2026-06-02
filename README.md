@@ -94,6 +94,9 @@ npx serve .
 # Puis ouvre http://localhost:8000
 ```
 
+### Méthode 4 : Ouvrir directement de mon github
+clique sur lien suivant: https://richerrail.github.io/assistantphraseenfant/
+
 > ⚠️ **Note** : La synthèse vocale nécessite une interaction utilisateur initiale (clic sur la page) sur certains navigateurs modernes pour des raisons de sécurité.
 
 ---
